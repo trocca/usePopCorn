@@ -1,28 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 
-const tempMovieData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
+// const tempMovieData = [
+//   {
+//     imdbID: "tt1375666",
+//     Title: "Inception",
+//     Year: "2010",
+//     Poster:
+//       "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
+//   },
+//   {
+//     imdbID: "tt0133093",
+//     Title: "The Matrix",
+//     Year: "1999",
+//     Poster:
+//       "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
+//   },
+//   {
+//     imdbID: "tt6751668",
+//     Title: "Parasite",
+//     Year: "2019",
+//     Poster:
+//       "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
+//   },
+// ];
 
 const tempWatchedData = [
   {
@@ -47,14 +47,55 @@ const tempWatchedData = [
   },
 ];
 
+const APIKEY = "cf98a040";
+
 const average = (arr) =>
-  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
+  arr.reduce((acc, cur) => acc + cur / arr.length, 0);
 
 export default function App() {
-
-  const [movies, setMovies] = useState(tempMovieData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [query, setQuery] = useState("");
+  const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
 
+  // Derived state using useMemo
+  const isQueryValid = useMemo(() => query.length > 2, [query]);
+
+  useEffect(() => {
+    if (isQueryValid) {
+      const fetchMovies = async () => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+          // Catching network errors
+          const response = await fetch(
+            `https://www.omdbapi.com/?apikey=${APIKEY}&s=${query}`
+          );
+
+          // Fetch throws an error if the server cannot be reached, 
+          // though it does not throw an error if the server returns an error status code
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log(data);
+          setMovies(data.Search || []);
+        } catch (error) {
+          console.error("Error fetching movies:", error);
+          setError(error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchMovies();
+    } else {
+      setMovies([]);
+    }
+  }, [isQueryValid, query]);
 
   return (
     <>
@@ -64,12 +105,14 @@ export default function App() {
       {/* Components can also be passed as props, explictly. Not preferrable, just an alternative used by React libs, like ReactRouter */}
       <Navbar>
         <Logo />
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </Navbar>
       <Main>
         <ListBox>
-          <MoviesList movies={movies}/>
+          {isLoading && isQueryValid && <Loader />}
+          {!isLoading && error && <ErrorMessage message={error.message} />}
+          {!isLoading && !error && isQueryValid && <MoviesList movies={movies} />}
         </ListBox>
         <ListBox>
           <WatchedMoviesList watched={watched} />
@@ -80,13 +123,26 @@ export default function App() {
   );
 }
 
-const Navbar = ({ children }) => {
+const Loader = () => {
+  return (
+    <span>Loading...</span>
+  );
+}
 
+const ErrorMessage = ({ message }) => {
+  return (
+    <p className="error">
+      <span role="img">⛔</span> {message}
+    </p>
+  );
+}
+
+const Navbar = ({ children }) => {
   return (
     <nav className="nav-bar">
       {children}
     </nav>
-  )
+  );
 };
 
 const Logo = () => {
@@ -95,41 +151,38 @@ const Logo = () => {
       <span role="img">🍿</span>
       <h1>usePopcorn</h1>
     </div>
-  )
+  );
 }
 
-const Search = () => {
-  const [query, setQuery] = useState("");
+const Search = ({ query, setQuery }) => {
   return (
     <input
       className="search"
       type="text"
-      placeholder="Search movies..."
+      placeholder="Search movies... type at least 3 characters"
       value={query}
       onChange={(e) => setQuery(e.target.value)}
     />
-  )
+  );
 }
 
 const NumResults = ({ movies }) => {
   return (
     <p className="num-results">
-      Found <strong>{movies.length}</strong> results
+      Found <strong>{movies?.length || 0}</strong> results
     </p>
-  )
+  );
 }
-
 
 const Main = ({ children }) => {
   return (
     <main className="main">
-     {children}
+      {children}
     </main>
-  )
+  );
 }
 
 const ListBox = ({ children }) => {
-
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -142,7 +195,7 @@ const ListBox = ({ children }) => {
       </button>
       {isOpen && children}
     </div>
-  )
+  );
 }
 
 const MoviesList = ({ movies }) => {
@@ -152,7 +205,7 @@ const MoviesList = ({ movies }) => {
         <Movie key={movie.imdbID} movie={movie} />
       ))}
     </ul>
-  )
+  );
 }
 
 const Movie = ({ movie }) => {
@@ -167,20 +220,22 @@ const Movie = ({ movie }) => {
         </p>
       </div>
     </li>
-  )
+  );
 }
 
 const WatchedMoviesList = ({ watched }) => {
   return (
     <ul className="list">
-      {watched.map((movie) => (WatchedMovie({ movie })))}
+      {watched.map((movie) => (
+        <WatchedMovie key={movie.imdbID} movie={movie} />
+      ))}
     </ul>
-  )
+  );
 }
 
 const WatchedMovie = ({ movie }) => {
   return (
-    <li key={movie.imdbID}>
+    <li>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -198,11 +253,10 @@ const WatchedMovie = ({ movie }) => {
         </p>
       </div>
     </li>
-  )
+  );
 }
 
 const WatchedMoviesSummary = ({ watched }) => {
-
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
   const avgRuntime = average(watched.map((movie) => movie.runtime));
@@ -229,5 +283,5 @@ const WatchedMoviesSummary = ({ watched }) => {
         </p>
       </div>
     </div>
-  )
+  );
 }
