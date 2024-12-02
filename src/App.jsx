@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import StarRating from './StarRating'
 
 // const tempMovieData = [
 //   {
@@ -59,6 +60,8 @@ export default function App() {
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState(tempWatchedData);
 
+  const [selectedId, setSelectedId] = useState(null);
+
   // Derived state using useMemo
   const isQueryValid = useMemo(() => query.length > 2, [query]);
 
@@ -97,6 +100,16 @@ export default function App() {
     }
   }, [isQueryValid, query]);
 
+  const handleMovieClick = (movieId) => {
+    //this will toggle the selected movie
+    setSelectedId(selectedId === movieId ? null : movieId);
+  };
+
+  const handleCloseMovieDetails = () => {
+    setSelectedId(null);
+  };
+
+
   return (
     <>
       {/* Navbar and ListBox are an example of composition */}
@@ -112,11 +125,16 @@ export default function App() {
         <ListBox>
           {isLoading && isQueryValid && <Loader />}
           {!isLoading && error && <ErrorMessage message={error.message} />}
-          {!isLoading && !error && isQueryValid && <MoviesList movies={movies} />}
+          {!isLoading && !error && isQueryValid && <MoviesList onSelectMovie={handleMovieClick} movies={movies} />}
         </ListBox>
         <ListBox>
-          <WatchedMoviesList watched={watched} />
-          <WatchedMoviesSummary watched={watched} />
+          {selectedId && <MovieDetails selectedId={selectedId} onCloseMovieDetails={handleCloseMovieDetails} />}
+          {!selectedId &&
+            <>
+              <WatchedMoviesList watched={watched} />
+              <WatchedMoviesSummary watched={watched} />
+            </>
+          }
         </ListBox>
       </Main>
     </>
@@ -198,19 +216,19 @@ const ListBox = ({ children }) => {
   );
 }
 
-const MoviesList = ({ movies }) => {
+const MoviesList = ({ movies, onSelectMovie }) => {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie key={movie.imdbID} movie={movie} />
+        <Movie key={movie.imdbID} movie={movie} onSelectMovie={onSelectMovie} />
       ))}
     </ul>
   );
 }
 
-const Movie = ({ movie }) => {
+const Movie = ({ movie, onSelectMovie }) => {
   return (
-    <li>
+    <li onClick={() => { onSelectMovie(movie.imdbID) }}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -283,5 +301,137 @@ const WatchedMoviesSummary = ({ watched }) => {
         </p>
       </div>
     </div>
+  );
+}
+
+
+const MovieDetails = ({ selectedId, onCloseMovieDetails }) => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [movieDetails, setMovieDetails] = useState(null); // Default to null
+
+  useEffect(() => {
+    const fetchMovieDetails = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `https://www.omdbapi.com/?apikey=${APIKEY}&i=${selectedId}`
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log(data);
+        setMovieDetails(data);
+      } catch (error) {
+        console.error("Error fetching movie details:", error);
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [selectedId]);
+
+  // If movieDetails is null or loading, show a loader or fallback UI
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <ErrorMessage message={error.message} />;
+  }
+
+  if (!movieDetails) {
+    return <p>No details available for this movie.</p>;
+  }
+
+  // Destructure the movie details only after confirming that movieDetails is not null
+  const {
+    Title: title,
+    Year: year,
+    Poster: poster,
+    Runtime: runtime,
+    imdbRating,
+    Plot: plot,
+    Director: director,
+    Actors: actors,
+    Genre: genre,
+    Language: language,
+    Country: country,
+    Awards: awards,
+    Production: production,
+    Website: website,
+  } = movieDetails;
+
+  return (
+    <div className="details">
+      <header>
+        <button className="btn-back" onClick={onCloseMovieDetails}>&larr</button>
+        <img src={poster} alt={`${title} poster`} />
+        <div className="details-overview">
+          <h2>{title}</h2>
+          <p>
+            <span>🗓</span>
+            <span>{year}</span>
+          </p>
+          <p>
+            <span>⏳</span>
+            <span>{runtime}</span>
+          </p>
+          <p>
+            <span>⭐️</span>
+            <span>{imdbRating}</span>
+          </p>
+        </div>
+      </header>
+
+      <section>
+        <div className="rating">
+          <StarRating maxRating={10} size={24} rating={imdbRating} />
+        </div>
+        <p>{plot}</p>
+        <p>
+          <span>🎬</span>
+          <span>{director}</span>
+        </p>
+        <p>
+          <span>👥</span>
+          <span>{actors}</span>
+        </p>
+        <p>
+          <span>🎭</span>
+          <span>{genre}</span>
+        </p>
+        <p>
+          <span>🗣</span>
+          <span>{language}</span>
+        </p>
+        <p>
+          <span>🌍</span>
+          <span>{country}</span>
+        </p>
+        <p>
+          <span>🏆</span>
+          <span>{awards}</span>
+        </p>
+        <p>
+          <span>🎥</span>
+          <span>{production}</span>
+        </p>
+        <p>
+          <span>🔗</span>
+          <a href={website} target="_blank" rel="noopener noreferrer">
+            {website}
+          </a>
+        </p>
+      </section>
+    </div>
+
   );
 }

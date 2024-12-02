@@ -14,14 +14,6 @@ const starContainerStyle = {
     gap: "0.5rem",
 };
 
-// Prop types... nice but you really want to use TypeScript...
-StarRating.propTypes = {
-    maxRating: PropTypes.number,
-    color: PropTypes.string,
-    size: PropTypes.number,
-    ratingText: PropTypes.array,
-    onRating: PropTypes.func,
-};
 
 const StarRating = ({maxRating = 5, color = '#fcc419', size = 48, ratingText = [], onRating }) => {
     
@@ -67,6 +59,16 @@ const StarRating = ({maxRating = 5, color = '#fcc419', size = 48, ratingText = [
         </div>
     )
 };
+
+// Prop types... nice but you really want to use TypeScript...
+StarRating.propTypes = {
+    maxRating: PropTypes.number,
+    color: PropTypes.string,
+    size: PropTypes.number,
+    ratingText: PropTypes.array,
+    onRating: PropTypes.func,
+};
+
 
 const Star = ({ onRate, full, onHoveringEnter, onHoveringLeave, color, size }) => {
 

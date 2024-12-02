@@ -47,16 +47,17 @@ body {
   display: flex;
   gap: 2.4rem;
   justify-content: center;
+  align-items: flex-start; /* To ensure elements align properly vertically */
 }
 
 .box {
-  width: 42rem;
+  width: 55rem; /* Increased from 42rem to 55rem for more spacious box */
   max-width: 100%;
   background-color: var(--color-background-500);
   border-radius: 0.9rem;
-  overflow: auto; /* Change from scroll to auto */
+  overflow: auto;
   position: relative;
-  padding: 1.6rem; /* Added padding to create space for the content */
+  padding: 2.4rem; /* Increased padding for more spacing around content */
 }
 
 .loader {
@@ -258,7 +259,11 @@ body {
 }
 
 .details img {
-  width: 33%;
+  width: 100%; /* Fill the width of the container */
+  height: auto; /* Adjust height automatically to maintain aspect ratio */
+  max-width: 300px; /* Add a reasonable max-width to avoid the image being too large */
+  object-fit: cover; /* Maintain aspect ratio while ensuring the image covers the container */
+  border-radius: 0.9rem; /* Optional: Add rounded corners to make it match other UI elements */
 }
 
 .details-overview {
