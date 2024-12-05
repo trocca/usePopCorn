@@ -58,7 +58,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
-  const [watched, setWatched] = useState(tempWatchedData);
+  const [watched, setWatched] = useState([]);
 
   const [selectedId, setSelectedId] = useState(null);
 
@@ -67,6 +67,9 @@ export default function App() {
 
   useEffect(() => {
     if (isQueryValid) {
+
+      const controller = new AbortController();
+
       const fetchMovies = async () => {
         setIsLoading(true);
         setError(null);
@@ -74,7 +77,7 @@ export default function App() {
         try {
           // Catching network errors
           const response = await fetch(
-            `https://www.omdbapi.com/?apikey=${APIKEY}&s=${query}`
+            `https://www.omdbapi.com/?apikey=${APIKEY}&s=${query}`, { signal: controller.signal } // AbortController
           );
 
           // Fetch throws an error if the server cannot be reached, 
@@ -88,13 +91,25 @@ export default function App() {
           setMovies(data.Search || []);
         } catch (error) {
           console.error("Error fetching movies:", error);
-          setError(error);
+
+          //The AbortController will cause JS to throw an error
+          //we can ignore, when the fetch is aborted
+          if (error.name !== "AbortError") {
+            setError(error);
+          }
+
         } finally {
           setIsLoading(false);
         }
       };
 
+      handleCloseMovieDetails(); // Close the movie details when a new search is made. Don't like it this way... but it works for now
       fetchMovies();
+
+      return () => {
+        controller.abort();
+      }
+
     } else {
       setMovies([]);
     }
@@ -108,6 +123,14 @@ export default function App() {
   const handleCloseMovieDetails = () => {
     setSelectedId(null);
   };
+
+  const handleAddToWatched = (movie) => {
+    setWatched((watched) => [...watched, movie]);
+  }
+
+  const handleRemoveFromWatched = (movieId) => {
+    setWatched((watched) => watched.filter((movie) => movie.imdbID !== movieId));
+  }
 
 
   return (
@@ -128,10 +151,10 @@ export default function App() {
           {!isLoading && !error && isQueryValid && <MoviesList onSelectMovie={handleMovieClick} movies={movies} />}
         </ListBox>
         <ListBox>
-          {selectedId && <MovieDetails selectedId={selectedId} onCloseMovieDetails={handleCloseMovieDetails} />}
+          {selectedId && <MovieDetails selectedId={selectedId} onAddWatched={handleAddToWatched} onCloseMovieDetails={handleCloseMovieDetails} watchedMovies={watched} />}
           {!selectedId &&
             <>
-              <WatchedMoviesList watched={watched} />
+              <WatchedMoviesList watched={watched} onRemoveFromWatched={handleRemoveFromWatched} />
               <WatchedMoviesSummary watched={watched} />
             </>
           }
@@ -241,17 +264,17 @@ const Movie = ({ movie, onSelectMovie }) => {
   );
 }
 
-const WatchedMoviesList = ({ watched }) => {
+const WatchedMoviesList = ({ watched, onRemoveFromWatched }) => {
   return (
     <ul className="list">
       {watched.map((movie) => (
-        <WatchedMovie key={movie.imdbID} movie={movie} />
+        <WatchedMovie key={movie.imdbID} movie={movie} onRemoveFromWatched={onRemoveFromWatched} />
       ))}
     </ul>
   );
 }
 
-const WatchedMovie = ({ movie }) => {
+const WatchedMovie = ({ movie, onRemoveFromWatched }) => {
   return (
     <li>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
@@ -269,6 +292,7 @@ const WatchedMovie = ({ movie }) => {
           <span>⏳</span>
           <span>{movie.runtime} min</span>
         </p>
+        <button className="btn-delete" onClick={() => onRemoveFromWatched(movie.imdbID)}>❌</button>
       </div>
     </li>
   );
@@ -289,11 +313,11 @@ const WatchedMoviesSummary = ({ watched }) => {
         </p>
         <p>
           <span>⭐️</span>
-          <span>{avgImdbRating}</span>
+          <span>{avgImdbRating.toFixed(2)}</span>
         </p>
         <p>
           <span>🌟</span>
-          <span>{avgUserRating}</span>
+          <span>{avgUserRating.toFixed(2)}</span>
         </p>
         <p>
           <span>⏳</span>
@@ -305,12 +329,44 @@ const WatchedMoviesSummary = ({ watched }) => {
 }
 
 
-const MovieDetails = ({ selectedId, onCloseMovieDetails }) => {
+const MovieDetails = ({ selectedId, onAddWatched, onCloseMovieDetails, watchedMovies }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null); // Default to null
+  const [userRating, setUserRating] = useState(0);
+
+  const isWatched = watchedMovies.some((movie) => movie.imdbID === selectedId);
+  const userExistingRating = watchedMovies.find((movie) => movie.imdbID === selectedId)?.userRating ?? null;
 
   useEffect(() => {
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onCloseMovieDetails();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    
+    // Cleanup, otherwise the event listener will be added each time the component re-renders
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [onCloseMovieDetails])
+
+  useEffect(() => {
+    if (movieDetails) document.title = `${movieDetails.Title} | Details`;
+
+    return () => {
+      document.title = "usePopCorn React Demo";
+    };
+
+  }, [movieDetails]);
+
+
+  useEffect(() => {
+
+
     const fetchMovieDetails = async () => {
       setIsLoading(true);
       setError(null);
@@ -369,10 +425,26 @@ const MovieDetails = ({ selectedId, onCloseMovieDetails }) => {
     Website: website,
   } = movieDetails;
 
+  const handleAddToWatched = () => {
+    onAddWatched({
+      imdbID: selectedId,
+      Title: title,
+      Year: year,
+      Poster: poster,
+      runtime: parseInt(runtime),
+      imdbRating: parseFloat(imdbRating),
+      userRating: userRating,
+    });
+
+    onCloseMovieDetails();
+
+  }
+
+
   return (
     <div className="details">
       <header>
-        <button className="btn-back" onClick={onCloseMovieDetails}>&larr</button>
+        <button className="btn-back" onClick={onCloseMovieDetails}>&larr;</button>
         <img src={poster} alt={`${title} poster`} />
         <div className="details-overview">
           <h2>{title}</h2>
@@ -393,7 +465,25 @@ const MovieDetails = ({ selectedId, onCloseMovieDetails }) => {
 
       <section>
         <div className="rating">
-          <StarRating maxRating={10} size={24} rating={imdbRating} />
+
+          {!isWatched && (
+            <>
+              <StarRating maxRating={10} size={24} rating={imdbRating} onRating={(rating) => setUserRating(rating)} />
+              {userRating > 0 && (
+                <button className="btn-add" onClick={handleAddToWatched}>
+                  Add to watched
+                </button>)
+              }
+            </>
+          )}
+
+          {isWatched && (
+            <p>
+              <StarRating maxRating={10} size={24} rating={userExistingRating} />
+              <span>{userExistingRating}</span>
+            </p>
+          )}
+
         </div>
         <p>{plot}</p>
         <p>
