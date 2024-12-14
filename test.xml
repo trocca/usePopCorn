@@ -1,0 +1,108 @@
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Security-SPP" Guid="{E23B33B0-C8C9-472C-A5F9-F2BDFEA0F156}" EventSourceName="Software Protection Platform Service"/>
+    <EventID Qualifiers="49152">16394</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x80000000000000</Keywords>
+    <TimeCreated SystemTime="2024-10-02T07:03:10.6763520Z"/>
+    <EventRecordID>201188</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID="0" ThreadID="0"/>
+    <Channel>Application</Channel>
+    <Computer>AT-022-948Q-K04.ids.sbsit.eu</Computer>
+    <Security/>
+  </System>
+  <EventData/>
+  <RenderingInfo Culture="de-AT">
+    <Message>Offlinemigration der Vorgängerversion erfolgreich.</Message>
+    <Level>Informationen</Level>
+    <Task/>
+    <Opcode/>
+    <Channel/>
+    <Provider>Microsoft-Windows-Security-SPP</Provider>
+    <Keywords>
+      <Keyword>Klassisch</Keyword>
+    </Keywords>
+  </RenderingInfo>
+</Event>
+
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft Office"/>
+    <EventID Qualifiers="49152">2011</EventID>
+    <Version>0</Version>
+    <Level>0</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x80000000000000</Keywords>
+    <TimeCreated SystemTime="2024-10-02T07:03:10.0858662Z"/>
+    <EventRecordID>201187</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID="0" ThreadID="0"/>
+    <Channel>Application</Channel>
+    <Computer>AT-022-948Q-K04.ids.sbsit.eu</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data>Application: excel.exe; IdentityType: Unknown; IsUsingAutoLoadedIdentity: 0; SessionLicensing: 0; LvuxSqm: 8; SppReady: 1; CurrentHr: 0x0; CorrelationId: {282D05E2-4181-4606-B97E-B5CE3EEA3FEA}; CurrentProductReleaseId: O365ProPlusRetail; AllProductReleaseIds (from store): O365ProPlusRetail,VisioProRetail; AuthTypes Requested: 3; EntitlementId: E0dd66dd6-0730-47ae-b2f3-ba1f625c6192_43de0ff5-c92c-492b-9116-175376d08c38_95bfd44c-91f8-41d3-b2e1-22607c8233ac; Key: RM222</Data>
+  </EventData>
+</Event>
+
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft Office"/>
+    <EventID Qualifiers="49152">2011</EventID>
+    <Version>0</Version>
+    <Level>0</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x80000000000000</Keywords>
+    <TimeCreated SystemTime="2024-10-02T07:03:08.8568632Z"/>
+    <EventRecordID>201186</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID="0" ThreadID="0"/>
+    <Channel>Application</Channel>
+    <Computer>AT-022-948Q-K04.ids.sbsit.eu</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data>Application: excel.exe; IdentityType: Unknown; IsUsingAutoLoadedIdentity: 0; SessionLicensing: 0; LvuxSqm: 0; SppReady: 1; CurrentHr: 0x0; CorrelationId: {282D05E2-4181-4606-B97E-B5CE3EEA3FEA}; CurrentProductReleaseId: O365ProPlusRetail; AllProductReleaseIds (from store): O365ProPlusRetail,VisioProRetail; User has 2 entitlements, 1 apply to current context, 1 currently installed</Data>
+  </EventData>
+</Event>
+
+<Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+  <System>
+    <Provider Name="Microsoft-Windows-Security-SPP" Guid="{E23B33B0-C8C9-472C-A5F9-F2BDFEA0F156}" EventSourceName="Software Protection Platform Service"/>
+    <EventID Qualifiers="16384">16384</EventID>
+    <Version>0</Version>
+    <Level>4</Level>
+    <Task>0</Task>
+    <Opcode>0</Opcode>
+    <Keywords>0x80000000000000</Keywords>
+    <TimeCreated SystemTime="2024-10-02T07:02:50.4151887Z"/>
+    <EventRecordID>201185</EventRecordID>
+    <Correlation/>
+    <Execution ProcessID="0" ThreadID="0"/>
+    <Channel>Application</Channel>
+    <Computer>AT-022-948Q-K04.ids.sbsit.eu</Computer>
+    <Security/>
+  </System>
+  <EventData>
+    <Data>2124-09-08T07:02:50Z</Data>
+    <Data>RulesEngine</Data>
+  </EventData>
+  <RenderingInfo Culture="de-AT">
+    <Message>Der Softwareschutzdienst wurde erfolgreich für den erneuten Start bei 2124-09-08T07:02:50Z geplant. Grund: RulesEngine.</Message>
+    <Level>Informationen</Level>
+    <Task/>
+    <Opcode/>
+    <Channel/>
+    <Provider>Microsoft-Windows-Security-SPP</Provider>
+    <Keywords>
+      <Keyword>Klassisch</Keyword>
+    </Keywords>
+  </RenderingInfo>
+</Event>
