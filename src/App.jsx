@@ -1,19 +1,14 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import StarRating from './StarRating'
-import { use } from "react";
+import { useMovies } from "./useMovies";
 
-
-const APIKEY = "cf98a040";
 
 const average = (arr) =>
   arr.reduce((acc, cur) => acc + cur / arr.length, 0);
 
 export default function App() {
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [query, setQuery] = useState("");
-  const [movies, setMovies] = useState([]);
 
   // Hydrate the watched movies from localStorage
   const [watched, setWatched] = useState(() => {
@@ -32,55 +27,7 @@ export default function App() {
   // Derived state using useMemo
   const isQueryValid = useMemo(() => query.length > 2, [query]);
 
-  useEffect(() => {
-    if (isQueryValid) {
-
-      const controller = new AbortController();
-
-      const fetchMovies = async () => {
-        setIsLoading(true);
-        setError(null);
-
-        try {
-          // Catching network errors
-          const response = await fetch(
-            `https://www.omdbapi.com/?apikey=${APIKEY}&s=${query}`, { signal: controller.signal } // AbortController
-          );
-
-          // Fetch throws an error if the server cannot be reached, 
-          // though it does not throw an error if the server returns an error status code
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-
-          const data = await response.json();
-          console.log(data);
-          setMovies(data.Search || []);
-        } catch (error) {
-          console.error("Error fetching movies:", error);
-
-          //The AbortController will cause JS to throw an error
-          //we can ignore, when the fetch is aborted
-          if (error.name !== "AbortError") {
-            setError(error);
-          }
-
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      handleCloseMovieDetails(); // Close the movie details when a new search is made. Don't like it this way... but it works for now
-      fetchMovies();
-
-      return () => {
-        controller.abort();
-      }
-
-    } else {
-      setMovies([]);
-    }
-  }, [isQueryValid, query]);
+  const { movies, isLoading, error } = useMovies(query, handleCloseMovieDetails);
 
 
   useEffect(() => {
@@ -93,7 +40,9 @@ export default function App() {
     setSelectedId(selectedId === movieId ? null : movieId);
   };
 
-  const handleCloseMovieDetails = () => {
+  // Using this function definition to allow hoisting and be able to pass it above in useMovies
+  // that won't work with arrow functions... keep in mind!
+  function handleCloseMovieDetails () {
     setSelectedId(null);
   };
 
